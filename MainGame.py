@@ -62,9 +62,5 @@ def question_generate(user_category, question_count):
 if __name__ == "__main__":
     data = reload_questions()
     user_name = user_login()
-    while True:
-        user_category, question_count = question_request()
-        question_generate(user_category, question_count)
-        should_continue = input("Do you wish to continue playing? Y/N")
-        if should_continue.lower() == 'n':
-            break
+    user_category, question_count = question_request()
+    question_generate(user_category, question_count)
