@@ -62,5 +62,6 @@ def question_generate(user_category, question_count):
 if __name__ == "__main__":
     data = reload_questions()
     user_name = user_login()
+    print("hello_world")
     user_category, question_count = question_request()
     question_generate(user_category, question_count)
