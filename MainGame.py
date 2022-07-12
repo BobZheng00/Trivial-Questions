@@ -1,6 +1,7 @@
 import json
 import time
 import random
+from threading import Timer
 
 
 def reload_questions():
@@ -41,6 +42,10 @@ def question_request():
 
     while question_count < 1:
         question_count = int(input("Please Enter the Number of Questions You Want to Try: "))
+        if question_count > len(data["category"][user_category]):
+            print("Your Request is INVALID. Maximum Number of Questions You Can Try in This Category is %i" % \
+                  len(data["category"][user_category]))
+            question_count = -1
 
     return user_category, question_count
 
@@ -48,9 +53,14 @@ def question_request():
 def question_generate(user_category, question_count):
     user_score = 0
     for i in range(question_count):
-        question_index = data["category"][user_category][random.randint(0, len(data["category"][user_category])-1)]
-        print(question_index)
+        question_index = data["category"][user_category][random.randint(0, len(data["category"][user_category]) - 1)]
+
+        timeout = 10
+        t = Timer(timeout, print, ['Sorry, times up'])
+        t.start()
         user_answer = input("%i. %s\n" % (i + 1, data["questions"][question_index]["question"]))
+        t.cancel()
+
         if user_answer == data["questions"][question_index]["correct answer"] or user_answer == data["questions"] \
                 [question_index]["correct answer"].lower() or user_answer == data["questions"][question_index] \
                 ["correct answer"].upper():
@@ -63,7 +73,7 @@ def question_generate(user_category, question_count):
                 data["category"][user_category].remove(question_index)
                 data["category"][data["questions"][question_index]["category"]].remove(question_index)
 
-    print(user_score)
+    print("You Score is %i out of %d questions" % (user_score, question_count))
     # print(len(data["category"]["Mathematics"]))
     # print(len(data["category"]["Miscellaneous"]))
 
@@ -78,4 +88,3 @@ if __name__ == "__main__":
         if should_continue.lower() == 'n' or should_continue == "N":
             break
     # leaderboard
-
