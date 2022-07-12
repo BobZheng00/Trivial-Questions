@@ -24,30 +24,39 @@ def question_request():
     count = 1
     for category in data["category"]:
         if category == "Miscellaneous":
-            print("17. Miscellaneous (Random selected questions from various categories)")
+            print("17. Miscellaneous (Random selected questions from various categories) (%d questions in total)" \
+                  % len(data["category"][category]))
         else:
             print("%i. %s (%d questions in total)" % (count, category, len(data["category"][category])))
         count += 1
         time.sleep(0.25)
 
     time.sleep(0.25)
+
     while user_category not in data["category"].keys():
         user_category = input("Please Enter the Name of Category You Want to Try: ")
-    while question_count < 1 or question_count > 20:
-        question_count = int(input("Please Enter the Number of Questions You Want to Try (20 at MAX): "))
+        if not data["category"][user_category]:
+            print("You Have Finished All Questions in %s. Please Try Another" % user_category)
+            user_category = -1
+
+    while question_count < 1:
+        question_count = int(input("Please Enter the Number of Questions You Want to Try: "))
+
     return user_category, question_count
 
 
 def question_generate(user_category, question_count):
     user_score = 0
     for i in range(question_count):
-        question_index = data["category"][user_category][random.randint(0, len(data["category"][user_category]))]
+        question_index = data["category"][user_category][random.randint(0, len(data["category"][user_category])-1)]
+        print(question_index)
         user_answer = input("%i. %s\n" % (i + 1, data["questions"][question_index]["question"]))
         if user_answer == data["questions"][question_index]["correct answer"] or user_answer == data["questions"] \
                 [question_index]["correct answer"].lower() or user_answer == data["questions"][question_index] \
                 ["correct answer"].upper():
             user_score += 1
             if user_category != "Miscellaneous":
+                # swap and pop the last
                 data["category"][user_category].remove(question_index)
                 data["category"]["Miscellaneous"].remove(question_index)
             else:
@@ -62,5 +71,11 @@ def question_generate(user_category, question_count):
 if __name__ == "__main__":
     data = reload_questions()
     user_name = user_login()
-    user_category, question_count = question_request()
-    question_generate(user_category, question_count)
+    while True:
+        user_category, question_count = question_request()
+        question_generate(user_category, question_count)
+        should_continue = input("Do you wish to continue playing? Y/N\n")
+        if should_continue.lower() == 'n' or should_continue == "N":
+            break
+    # leaderboard
+
