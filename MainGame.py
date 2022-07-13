@@ -4,6 +4,20 @@ import random
 from threading import Timer
 
 
+def reload_leaderboard():
+    with open('leaderboard.json') as json_file:
+        leader_board = json.load(json_file)
+    return leader_board
+
+
+def update_leaderboard():
+    global leader_board
+    leader_board = dict(sorted(leader_board.items(), key=lambda item: item[1]))
+    with open('leaderboard.json', 'w') as outfile:
+        json.dump(leader_board, outfile)
+    return leader_board
+
+
 def reload_questions():
     with open('questions_data.json') as json_file:
         data = json.load(json_file)
@@ -55,7 +69,7 @@ def question_generate(user_category, question_count):
     for i in range(question_count):
         question_index = data["category"][user_category][random.randint(0, len(data["category"][user_category]) - 1)]
 
-        timeout = 10
+        timeout = 20
         t = Timer(timeout, print, ['Sorry, times up'])
         t.start()
         user_answer = input("%i. %s\n" % (i + 1, data["questions"][question_index]["question"]))
@@ -74,13 +88,27 @@ def question_generate(user_category, question_count):
                 data["category"][data["questions"][question_index]["category"]].remove(question_index)
 
     print("You Score is %i out of %d questions" % (user_score, question_count))
-    # print(len(data["category"]["Mathematics"]))
-    # print(len(data["category"]["Miscellaneous"]))
+    if user_name not in leader_board:
+        leader_board[user_name] = [user_score, user_category]
+    elif user_name in leader_board and leader_board[user_name][0] < user_score:
+        leader_board[user_name] = [user_score, user_category]
+        print("Your New Record has been Updated on Leaderboard!")
+    else:
+        print("Your Record on Leaderboard was %i. Keep Trying!" % leader_board[user_name][0])
+
+    update_leaderboard()
+    print(leader_board)
 
 
 if __name__ == "__main__":
     data = reload_questions()
     user_name = user_login()
+    leader_board = reload_leaderboard()
+
+    # dictionary_keys = list(leader_board.keys())
+    # sorted_dict = {dictionary_keys[i]: sorted(leader_board.values())[i] for i in range(len(dictionary_keys))}
+    # print(sorted_dict)
+
     while True:
         user_category, question_count = question_request()
         question_generate(user_category, question_count)
