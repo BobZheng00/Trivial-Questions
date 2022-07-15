@@ -25,7 +25,7 @@ def update_leaderboard():
 
 def display_leaderboard():
     count = 1
-    print("########### LEADERBOARD ##########")
+    print("################ LEADERBOARD ################")
     for key in leader_board:
         print("%s     %s      %s      %i" % (inflector.ordinal(count), key, leader_board[key][1], leader_board[key][0]))
         count += 1
@@ -117,10 +117,6 @@ if __name__ == "__main__":
     user_name = user_login()
     leader_board = reload_leaderboard()
 
-    # dictionary_keys = list(leader_board.keys())
-    # sorted_dict = {dictionary_keys[i]: sorted(leader_board.values())[i] for i in range(len(dictionary_keys))}
-    # print(sorted_dict)
-
     while True:
         user_category, question_count = question_request()
         question_generate(user_category, question_count)
@@ -128,4 +124,3 @@ if __name__ == "__main__":
         should_continue = input("Do you wish to continue playing? Y/N\n")
         if should_continue.lower() == 'n' or should_continue == "N":
             break
-    # leaderboard
