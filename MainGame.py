@@ -2,6 +2,11 @@ import json
 import time
 import random
 from threading import Timer
+from pytimedinput import timedInput
+from inputimeout import inputimeout, TimeoutOccurred
+import inflect
+
+inflector = inflect.engine()
 
 
 def reload_leaderboard():
@@ -12,10 +17,18 @@ def reload_leaderboard():
 
 def update_leaderboard():
     global leader_board
-    leader_board = dict(sorted(leader_board.items(), key=lambda item: item[1]))
+    leader_board = dict(sorted(leader_board.items(), key=lambda item: item[1], reverse=True))
     with open('leaderboard.json', 'w') as outfile:
         json.dump(leader_board, outfile)
     return leader_board
+
+
+def display_leaderboard():
+    count = 1
+    print("########### LEADERBOARD ##########")
+    for key in leader_board:
+        print("%s     %s      %s      %i" % (inflector.ordinal(count), key, leader_board[key][1], leader_board[key][0]))
+        count += 1
 
 
 def reload_questions():
@@ -50,7 +63,7 @@ def question_request():
 
     while user_category not in data["category"].keys():
         user_category = input("Please Enter the Name of Category You Want to Try: ")
-        if not data["category"][user_category]:
+        if user_category in data["category"].keys() and not data["category"][user_category]:
             print("You Have Finished All Questions in %s. Please Try Another" % user_category)
             user_category = -1
 
@@ -69,11 +82,11 @@ def question_generate(user_category, question_count):
     for i in range(question_count):
         question_index = data["category"][user_category][random.randint(0, len(data["category"][user_category]) - 1)]
 
-        timeout = 20
-        t = Timer(timeout, print, ['Sorry, times up'])
-        t.start()
-        user_answer = input("%i. %s\n" % (i + 1, data["questions"][question_index]["question"]))
-        t.cancel()
+        try:
+            user_answer = inputimeout(prompt="%i. %s\n" % (i + 1, data["questions"][question_index]["question"]), timeout=10)
+        except TimeoutOccurred:
+            print('Sorry, times up')
+            user_answer = ""
 
         if user_answer == data["questions"][question_index]["correct answer"] or user_answer == data["questions"] \
                 [question_index]["correct answer"].lower() or user_answer == data["questions"][question_index] \
@@ -97,7 +110,6 @@ def question_generate(user_category, question_count):
         print("Your Record on Leaderboard was %i. Keep Trying!" % leader_board[user_name][0])
 
     update_leaderboard()
-    print(leader_board)
 
 
 if __name__ == "__main__":
@@ -112,6 +124,7 @@ if __name__ == "__main__":
     while True:
         user_category, question_count = question_request()
         question_generate(user_category, question_count)
+        display_leaderboard()
         should_continue = input("Do you wish to continue playing? Y/N\n")
         if should_continue.lower() == 'n' or should_continue == "N":
             break
