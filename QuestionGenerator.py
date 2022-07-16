@@ -3,8 +3,8 @@ import json
 
 
 def load_questions():
+    global questions
     file_1 = pd.read_excel('Trivia-Printable.xlsx', "Trivia")
-    questions = {"questions":[], "category":{}}
     miscellaneous = []
     # category = {}
     for row_index, row in file_1.iterrows():
@@ -22,14 +22,38 @@ def load_questions():
 
     questions["category"]["Miscellaneous"] = miscellaneous
 
-    with open('questions_data.json', 'w') as outfile:
-        json.dump(questions, outfile)
-
     for key in questions["category"]:
         print(key)
 
     print(questions["category"])
 
 
+def load_multiples():
+    with open('multiple_data (1).json') as json_file:
+        data1 = json.load(json_file)
+
+    with open('multiple_data (2).json') as json_file:
+        data2 = json.load(json_file)
+
+    with open('multiple_data (3).json.') as json_file:
+        data3 = json.load(json_file)
+
+    with open('multiple_data (4).json') as json_file:
+        data4 = json.load(json_file)
+
+    multiples = [data1, data2, data3, data4]
+    for i in multiples:
+        for j in range(len(i["results"])):
+            if i["results"][j] not in questions["multiples"]:
+                questions["multiples"].append(i["results"][j])
+
+    print(len(questions["multiples"]))
+    print(questions)
+
+
 if __name__ == "__main__":
+    questions = {"questions": [], "multiples": [], "category": {}}
+    load_multiples()
     load_questions()
+    with open('questions_data.json', 'w') as outfile:
+        json.dump(questions, outfile)
