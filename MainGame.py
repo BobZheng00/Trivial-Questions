@@ -44,6 +44,19 @@ def user_login():
     return user_name
 
 
+def select_type():
+    user_type = -1
+    print("Hi %s, Select the Type of Questions You May Want to Try:" % user_name)
+    time.sleep(0.25)
+    print("1. Trivia Questions")
+    time.sleep(0.25)
+    print("2. Multiple Choice and True & False")
+    time.sleep(0.25)
+    while int(user_type) not in [1, 2]:
+        user_type = int(input("Please Enter the INDEX of Type You Want: "))
+    return user_type
+
+
 def question_request():
     user_category = -1
     question_count = -1
@@ -83,7 +96,7 @@ def question_generate(user_category, question_count):
         question_index = data["category"][user_category][random.randint(0, len(data["category"][user_category]) - 1)]
 
         try:
-            user_answer = inputimeout(prompt="%i. %s\n" % (i + 1, data["questions"][question_index]["question"]), timeout=10)
+            user_answer = inputimeout(prompt="%i. %s\n" % (i + 1, data["questions"][question_index]["question"]), timeout=30)
         except TimeoutOccurred:
             print('Sorry, times up')
             user_answer = ""
@@ -112,14 +125,59 @@ def question_generate(user_category, question_count):
     update_leaderboard()
 
 
+def multiple_generate():
+    multiple_count = -1
+    user_score = 0
+    user_answer = ""
+    while multiple_count < 1:
+        multiple_count = int(input("Please Enter the Number of Questions You Want to Try: "))
+        if multiple_count > len(data["multiples"]):
+            print("Your Request is INVALID. Maximum Number of Questions You Can Try is %i" % len(data["multiples"]))
+            multiple_count = -1
+
+    for i in range(multiple_count):
+        multiple_index = random.randint(0, len(data["multiples"]) - 1)
+        if data["multiples"][multiple_index]["type"] == "multiple":
+            selections = [data["multiples"][multiple_index]["correct_answer"]] + data["multiples"][multiple_index]["incorrect_answers"]
+            print("\n%i. %s" % (i + 1, data["multiples"][multiple_index]["question"]))
+            for j in range(4):
+                single_selection = selections.pop(random.randint(0, len(selections)-1))
+                if single_selection == data["multiples"][multiple_index]["correct_answer"]:
+                    correct_answer = chr(ord('@')+j+1)
+                print("%s. %s" % (chr(ord('@')+j+1), single_selection))
+            try:
+                user_answer = inputimeout(prompt="Select the best possible answer: ", timeout=30)
+            except TimeoutOccurred:
+                print('Sorry, times up')
+                user_answer = ""
+
+        elif data["multiples"][multiple_index]["type"] == "boolean":
+            print("\n%i. %s" % (i + 1, data["multiples"][multiple_index]["question"]))
+            print("True or False")
+            correct_answer = data["multiples"][multiple_index]["correct_answer"]
+            try:
+                user_answer = inputimeout(prompt="Choose either True or False: ", timeout=30)
+            except TimeoutOccurred:
+                print('Sorry, times up')
+                user_answer = ""
+
+        if user_answer == correct_answer:
+            user_score += 1
+            data["multiples"].pop(multiple_index)
+
+
 if __name__ == "__main__":
     data = reload_questions()
     user_name = user_login()
     leader_board = reload_leaderboard()
 
     while True:
-        user_category, question_count = question_request()
-        question_generate(user_category, question_count)
+        user_type = select_type()
+        if user_type == 1:
+            user_category, question_count = question_request()
+            question_generate(user_category, question_count)
+        elif user_type == 2:
+            multiple_generate()
         display_leaderboard()
         should_continue = input("Do you wish to continue playing? Y/N\n")
         if should_continue.lower() == 'n' or should_continue == "N":
