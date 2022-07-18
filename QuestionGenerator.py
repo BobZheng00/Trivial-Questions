@@ -27,6 +27,9 @@ def load_questions():
 
     print(questions["category"])
 
+    # Unit Test: check empty files, check correct files, check other cases
+    # Use cloud storage for big files instead of uploading to github
+
 
 def load_multiples():
     with open('multiple_data (1).json') as json_file:
