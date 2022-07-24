@@ -3,19 +3,44 @@ import time
 import random
 from inputimeout import inputimeout, TimeoutOccurred
 import inflect
+import QuestionGenerator
+import os
+import glob
+
 inflector = inflect.engine()
 
 
 class Gameplay:
     def __init__(self):
-        self.data = self.reload_questions()
         self.user_name = self.user_login()
+        self.data = self.reload_questions()
         self.leader_board = self.reload_leaderboard()
 
     def reload_questions(self):
-        with open('questions_data.json') as json_file:
-            data = json.load(json_file)
-        return data
+        while True:
+            if_custom = input("Do You Want to Try LOCAL Questions or Custom Questions: (ENTER LOCAL or CUSTOM) ")
+            if if_custom.lower() == "local" or if_custom.lower() == "custom":
+                break
+        if if_custom.lower() == "local":
+            with open('questions_data.json') as json_file:
+                data = json.load(json_file)
+            return data
+        else:
+            while True:
+                custom_files = glob.glob("custom_data/*.json")
+                print(custom_files)
+                for i in range(len(custom_files)):
+                    print("%i. %s" % (i + 1, os.path.basename(custom_files[i])))
+                while True:
+                    custom_choice = input("Please select the questions you want to try: (Type IMPORT to load your own "
+                                          "questions)")
+                    if custom_choice.lower() == "import":
+                        QuestionGenerator.QuestionLoad.load_custom(self)
+                        break
+                    elif 0 < int(custom_choice) <= len(custom_files):
+                        with open(custom_files[int(custom_choice)-1]) as json_file:
+                            data = json.load(json_file)
+                        return data
 
     def user_login(self):
         print("WELCOME TO TRIVIAL QUESTIONS")
@@ -29,15 +54,18 @@ class Gameplay:
         return leader_board
 
     def select_type(self):
-        user_type = -1
-        print("Hi %s, Select the Type of Questions You May Want to Try:" % self.user_name)
-        time.sleep(0.25)
-        print("1. Trivia Questions")
-        time.sleep(0.25)
-        print("2. Multiple Choice and True & False")
-        time.sleep(0.25)
-        while int(user_type) not in [1, 2]:
-            user_type = int(input("Please Enter the INDEX of Type You Want: "))
+        if "category" not in self.data:
+            return 3
+        else:
+            user_type = -1
+            print("Hi %s, Select the Type of Questions You May Want to Try:" % self.user_name)
+            time.sleep(0.25)
+            print("1. Trivia Questions")
+            time.sleep(0.25)
+            print("2. Multiple Choice and True & False")
+            time.sleep(0.25)
+            while int(user_type) not in [1, 2]:
+                user_type = int(input("Please Enter the INDEX of Type You Want: "))
         return user_type
 
     def update_leaderboard(self):
@@ -51,7 +79,7 @@ class Gameplay:
         print("################ LEADERBOARD ################")
         for key in self.leader_board:
             print("%s     %s      %s      %i" % (
-            inflector.ordinal(count), key, self.leader_board[key][1], self.leader_board[key][0]))
+                inflector.ordinal(count), key, self.leader_board[key][1], self.leader_board[key][0]))
             count += 1
 
     def question_request(self):
@@ -175,6 +203,8 @@ class Gameplay:
                 self.question_generate(user_category, question_count)
             elif user_type == 2:
                 self.multiple_generate()
+            elif user_type == 3:
+                print("CUSTOM QUESTION SET")
             self.display_leaderboard()
             should_continue = input("Do you wish to continue playing? Y/N\n")
             if should_continue.lower() == 'n' or should_continue == "N":
@@ -182,5 +212,6 @@ class Gameplay:
 
 
 if __name__ == "__main__":
+    question_load = QuestionGenerator.QuestionLoad()
     gameplay = Gameplay()
     gameplay.run()
