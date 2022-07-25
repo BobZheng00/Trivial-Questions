@@ -18,7 +18,7 @@ class Gameplay:
 
     def reload_questions(self):
         while True:
-            if_custom = input("Do You Want to Try LOCAL Questions or Custom Questions: (ENTER LOCAL or CUSTOM) ")
+            if_custom = input("Do You Want to Try LOCAL Questions or CUSTOM Questions (ENTER LOCAL or CUSTOM): ")
             if if_custom.lower() == "local" or if_custom.lower() == "custom":
                 break
         if if_custom.lower() == "local":
@@ -32,13 +32,13 @@ class Gameplay:
                 for i in range(len(custom_files)):
                     print("%i. %s" % (i + 1, os.path.basename(custom_files[i])))
                 while True:
-                    custom_choice = input("Please select the questions you want to try: (Type IMPORT to load your own "
-                                          "questions)")
+                    custom_choice = input("Please select the questions you want to try (Type IMPORT to load your own "
+                                          "questions): ")
                     if custom_choice.lower() == "import":
-                        QuestionGenerator.QuestionLoad.load_custom(self)
+                        QuestionGenerator.QuestionLoad.load_custom(question_load)
                         break
                     elif 0 < int(custom_choice) <= len(custom_files):
-                        with open(custom_files[int(custom_choice)-1]) as json_file:
+                        with open(custom_files[int(custom_choice) - 1]) as json_file:
                             data = json.load(json_file)
                         return data
 
@@ -155,6 +155,7 @@ class Gameplay:
 
     def multiple_generate(self):
         multiple_count = -1
+        correct_answer = None
         user_score = 0
         user_answer = ""
         while multiple_count < 1:
