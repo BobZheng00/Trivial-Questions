@@ -9,9 +9,8 @@ class QuestionLoad:
 
     def load_questions(self):
         file_1 = pd.read_excel('Trivia-Printable.xlsx', "Trivia")
-        if file_1:
-            return 0
         miscellaneous = []
+        # category = {}
         for row_index, row in file_1.iterrows():
             for i in range(3):
                 category = str(row[0+i*4]).replace("\u00a0", "")
@@ -36,7 +35,6 @@ class QuestionLoad:
         # Use cloud storage for big files instead of uploading to github
 
     def load_multiples(self):
-        data1, data2, data3, data4 = None, None, None, None
         with open("multiples_data/multiple_data (1).json") as json_file:
             data1 = json.load(json_file)
 
