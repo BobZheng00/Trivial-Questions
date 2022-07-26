@@ -8,12 +8,14 @@ import os
 import glob
 
 inflector = inflect.engine()
+question, multi, custom = 1, 2, 3
 
 
 class Gameplay:
     def __init__(self):
         self.user_name = self.user_login()
         self.data = self.reload_questions()
+        self.user_type = self.select_type()
         self.leader_board = self.reload_leaderboard()
 
     def reload_questions(self):
@@ -35,7 +37,7 @@ class Gameplay:
                     custom_choice = input("Please select the questions you want to try: (Type IMPORT to load your own "
                                           "questions)")
                     if custom_choice.lower() == "import":
-                        QuestionGenerator.QuestionLoad.load_custom(self)
+                        QuestionGenerator.QuestionLoad.load_custom(question_load)
                         break
                     elif 0 < int(custom_choice) <= len(custom_files):
                         with open(custom_files[int(custom_choice)-1]) as json_file:
@@ -49,8 +51,11 @@ class Gameplay:
         return user_name
 
     def reload_leaderboard(self):
-        with open('leaderboard.json') as json_file:
-            leader_board = json.load(json_file)
+        if self.user_type == question or self.user_type == multi:
+            with open('leaderboard.json') as json_file:
+                leader_board = json.load(json_file)
+        else:
+            leader_board = self.data["leaderboard"]
         return leader_board
 
     def select_type(self):
@@ -68,10 +73,24 @@ class Gameplay:
                 user_type = int(input("Please Enter the INDEX of Type You Want: "))
         return user_type
 
+    def update_player_score(self, user_score, user_category):
+        if self.user_name not in self.leader_board:
+            self.leader_board[self.user_name] = [user_score, user_category]
+        elif self.user_name in self.leader_board and self.leader_board[self.user_name][0] < user_score:
+            self.leader_board[self.user_name] = [user_score, user_category]
+            print("Your New Record has been Updated on Leaderboard!")
+        else:
+            print("Your Record on Leaderboard was %i. Keep Trying!" % self.leader_board[self.user_name][0])
+
     def update_leaderboard(self):
         leader_board = dict(sorted(self.leader_board.items(), key=lambda item: item[1], reverse=True))
-        with open('leaderboard.json', 'w') as outfile:
-            json.dump(leader_board, outfile)
+        if self.user_type == question or self.user_type == multi:
+            with open('leaderboard.json', 'w') as outfile:
+                json.dump(leader_board, outfile)
+        elif self.user_type == custom:
+            self.data["leaderboard"] = leader_board
+            with open(self.data["path"], 'w') as outfile:
+                json.dump(self.data, outfile)
         return leader_board
 
     def display_leaderboard(self):
@@ -143,20 +162,15 @@ class Gameplay:
                         question_index)
 
         print("You Score is %i out of %d questions" % (user_score, question_count))
-        if self.user_name not in self.leader_board:
-            self.leader_board[self.user_name] = [user_score, user_category]
-        elif self.user_name in self.leader_board and self.leader_board[self.user_name][0] < user_score:
-            self.leader_board[self.user_name] = [user_score, user_category]
-            print("Your New Record has been Updated on Leaderboard!")
-        else:
-            print("Your Record on Leaderboard was %i. Keep Trying!" % self.leader_board[self.user_name][0])
 
+        self.update_player_score(user_score, user_category)
         self.leader_board = self.update_leaderboard()
 
     def multiple_generate(self):
         multiple_count = -1
         user_score = 0
         user_answer = ""
+        correct_answer = None
         while multiple_count < 1:
             multiple_count = int(input("Please Enter the Number of Questions You Want to Try: "))
             if multiple_count > len(self.data["multiples"]):
@@ -195,20 +209,75 @@ class Gameplay:
                 user_score += 1
                 self.data["multiples"].pop(multiple_index)
 
+        print("You Score is %i out of %d questions" % (user_score, multiple_count))
+        self.update_player_score(user_score, "MC & Bool")
+        self.leader_board = self.update_leaderboard()
+
+    def custom_generate(self):
+        user_score = 0
+        correct_answer = ""
+        for i in range(len(self.data["questions"])):
+            if self.data["questions"][i]["type"] == "multiple":
+                selections = [self.data["questions"][i]["correct_answer"]] + self.data["questions"][i]["incorrect_answers"]
+                print("\n%i. %s" % (i + 1, self.data["questions"][i]["question"]))
+                for j in range(len(selections)):
+                    single_selection = selections.pop(random.randint(0, len(selections) - 1))
+                    if single_selection == self.data["questions"][i]["correct_answer"]:
+                        correct_answer = chr(ord('@') + j + 1)
+                    print("%s. %s" % (chr(ord('@') + j + 1), single_selection))
+                try:
+                    user_answer = inputimeout(prompt="Select the best possible answer: ", timeout=30)
+                except TimeoutOccurred:
+                    print('Sorry, times up')
+                    user_answer = ""
+
+            elif self.data["questions"][i]["type"] == "question":
+                correct_answer = str(self.data["questions"][i]["correct_answer"])
+                try:
+                    user_answer = inputimeout(
+                        prompt="%i. %s\n" % (i + 1, self.data["questions"][i]["question"]), timeout=30)
+                except TimeoutOccurred:
+                    print('Sorry, times up')
+                    user_answer = ""
+
+            elif self.data["questions"][i]["type"] == "boolean":
+                print("\n%i. %s" % (i + 1, self.data["questions"][i]["question"]))
+                print("True or False")
+                correct_answer = self.data["questions"][i]["correct_answer"]
+                try:
+                    user_answer = inputimeout(prompt="Choose either True or False: ", timeout=30)
+                except TimeoutOccurred:
+                    print('Sorry, times up')
+                    user_answer = ""
+            else:
+                user_answer = None
+                correct_answer = None
+
+            if user_answer == correct_answer and user_answer and correct_answer:
+                user_score += 1
+
+        print("You Score is %i out of %d questions" % (user_score, len(self.data["questions"])))
+        self.update_player_score(user_score, "")
+        self.leader_board = self.update_leaderboard()
+
     def run(self):
         while True:
-            user_type = self.select_type()
-            if user_type == 1:
+            if self.user_type == question:
                 user_category, question_count = self.question_request()
                 self.question_generate(user_category, question_count)
-            elif user_type == 2:
+            elif self.user_type == multi:
                 self.multiple_generate()
-            elif user_type == 3:
+            elif self.user_type == custom:
                 print("CUSTOM QUESTION SET")
+                self.custom_generate()
             self.display_leaderboard()
             should_continue = input("Do you wish to continue playing? Y/N\n")
             if should_continue.lower() == 'n' or should_continue == "N":
                 break
+            else:
+                self.data = self.reload_questions()
+                self.user_type = self.select_type()
+                self.leader_board = self.reload_leaderboard()
 
 
 if __name__ == "__main__":

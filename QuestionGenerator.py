@@ -90,6 +90,7 @@ class QuestionLoad:
                             if row[i] != "" and row[i] != row[7]:
                                 custom_data["questions"][len(custom_data["questions"]) - 1]["incorrect_answers"].append(row[i])
             new_path = "custom_data/" + os.path.basename(path).replace(".xlsx", ".json")
+            custom_data["path"] = new_path
             with open(new_path, 'w+') as outfile:
                 json.dump(custom_data, outfile)
 
