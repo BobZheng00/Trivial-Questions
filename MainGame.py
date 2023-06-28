@@ -30,19 +30,21 @@ class Gameplay:
         else:
             while True:
                 custom_files = glob.glob("custom_data/*.json")
-                print(custom_files)
                 for i in range(len(custom_files)):
                     print("%i. %s" % (i + 1, os.path.basename(custom_files[i])))
                 while True:
                     custom_choice = input("Please select the questions you want to try: (Type IMPORT to load your own "
                                           "questions)")
-                    if custom_choice.lower() == "import":
-                        QuestionGenerator.QuestionLoad.load_custom(question_load)
-                        break
-                    elif 0 < int(custom_choice) <= len(custom_files):
-                        with open(custom_files[int(custom_choice)-1]) as json_file:
-                            data = json.load(json_file)
-                        return data
+                    try:
+                        if custom_choice.lower() == "import":
+                            QuestionGenerator.QuestionLoad.load_custom(question_load)
+                            break
+                        elif 0 < int(custom_choice) <= len(custom_files):
+                            with open(custom_files[int(custom_choice)-1]) as json_file:
+                                data = json.load(json_file)
+                            return data
+                    except Exception:
+                        pass
 
     def user_login(self):
         print("WELCOME TO TRIVIAL QUESTIONS")
